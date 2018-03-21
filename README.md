@@ -1,2 +1,2 @@
 # public-docs
-WebShield Public Docs
+This repo contains the WebShield public facing documents.
