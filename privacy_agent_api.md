@@ -11,7 +11,7 @@ The Privacy Adapter is developed by external parties and typically sits in-front
   - optionally creating any Custom Trust Criteria that needs to be included in the Privacy Graph.
   - optionally creating any Custom Provenance that needs to be included in the Privacy Graph
 
-#Privacy Pipes
+# Privacy Pipes
 
 Privacy pipes act as privacy preserving HTTP(s) proxies allowing services running inside or outside of Privacy Domains to send and receive data with other services inside or outside of a Privacy Domains whilst meeting the required Trust Criteria.
 
