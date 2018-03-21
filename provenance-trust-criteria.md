@@ -1,28 +1,36 @@
 # Trust Criteria and Trust Credentials
 
-Trust Criteria is a Trust Model term for any business, compliance, or privacy policy that controls access a resource they are associated with.
+Trust Criteria is an abstract Trust Model term for any business, compliance, or privacy policy.
 
-Trust Credential is a Trust Model term for any signed document making a claim about a subject.
+Trust Credential is an abstract Trust Model term for any signed document making a claim about an entity.
 
-Trust Criteria and Trust Credentials can be defined at the Privacy Domain level (PN Trust Criteria and PN Trust Credentials) and at the Data Level (Data Trust Criteria and Data Trust Credentials). At the Privacy Domain level they are used to control information flow between Privacy Domains, and at the data level they are used to control access to the data.
+Trust Criteria and Trust Credentials are used to both represent and enforce both policies and provenance. They are cryptographically bound into a Privacy Graph by a Privacy Agent so that they are carried with the data. The Trust Criteria and Trust Credentials can be of any format or schema and may be included by value or reference.
 
-## Privacy Domain Level
+In this document Data Provenance is a general term that covers the data's Provenance, Lineage, and Descriptive information.
 
-PN Trust Criteria are used at the Privacy Domain level. They have a known format and schema so that they can be enforced by the Privacy Agent as part of a Privacy Pipe. PN Trust Criteria describe a set of required PN Trust Credentials in terms of attribute and issuers and evaluates to true for a Privacy Domain if that Privacy Domain has a super-set of the required PN Trust Credentials.
+# PN Trust Criteria and PN Trust Credentials
 
-PN Trust Criteria can be associated with data and are cryptographically bound into the Privacy Graph that envelops the data owners data by the Privacy Agent. Today the PN Trust Criteria are scoped at the data graph level, in the future this will be type and property.
+PN Trust Criteria and PN Trust Credentials are concrete types of Trust Criteria and Trust Credentials that can be used by parties and the WebShield Software to both represent and enforce both policies and provenance. Note parties can also associate other Trust Criteria and Trust Credentials with the data.
 
-Privacy Pipes enforce the data owners trusted destination Privacy Domain PN Trust Criteria and data will not be forwarded to any Privacy Domain that does not have a superset of the required PN Trust Credentials.
+PN Trust Credentials are digitally signed documents that allow parties to assign credentials/attributes (typically globally unique URLs) from a PN Trust Model to PN Resources such as Privacy Domains and PN Data Models. A PN Trust Credential may be a JWT and/or X509 certificate. The attributes are used to enforce policies ('authorized-client'), record provenance ('secure-source'), describe data ('PII-attribute'), etc. WebShield provides a command line tool to issue/capture PN Trust Credentials.
 
-PN Trust Credentials are used at the Privacy Domain level and can be issued to Privacy Domains by other Privacy Domains. They have a known format and schema so that they can be processed by the Privacy Agent but they can contain any user defined attribute (usually a globally unique URL) that represents the credential and are part of a Trust Model.
+PN Trust Criteria describe a set of required PN Trust Credentials in terms of attribute and issuers and evaluates to true for a PN Resource if that PN Resource has a super-set of the required PN Trust Credentials. PN Trust Criteria have a JSON schema defined by the WebShield software.
 
-A PN Trust Credential is a JWT that that contains the user defined attribute, the subject Privacy Domain, and the issuer Privacy Domain, in the future other issuers will be supported. WebShield provides a command line tool to issue PN Trust Credentials.
+PN Trust Credentials and PN Trust Criteria can be used by any party and are visible in the Privacy Graph.
+
+An example of WebShield software using PN Trust Criteria and PN Trust Credentials is the Privacy Pipe Information Flow Control mechanisms, specifically
+ - the data's PN Trust Criteria that describe what PN Trust Credentials a destination Privacy Domain must have, i.e it must have a superset of the required.
+ - the destination Privacy Domain's PN Trust Criteria that describe what PN Trust Credentials the data must have, i.e. it must have a superset of the required.
+
+Some non-normative PN Trust Criteria and PN Trust Credentials
 
 ```json
 //
-// PN Trust Criteria
+// PN Trust Criteria statement. All the PN trust criteria need to met (AND clause)
+// the scope defines that should be applied to the whole graph.
 //
-{
+{ "@context": "pn jsonld context",
+  "id": "<globally unique id for the trust criteria",
   "type": "pn_trust_criteria_statement",
   "scope": "graph",
   "trust_criteria":[
@@ -32,21 +40,6 @@ A PN Trust Credential is a JWT that that contains the user defined attribute, th
       "issuer": "<issuer of attribute>",
     },
   ],
-}
-
-//
-// A PN Privacy Graph containing the PN Trust Criteria destination_privacy_domain_trust_criteria
-//
-{
-  "@context": "<pn jsonld context>",
-  "id": "<pg id>",
-  "type": "privacy_graph",
-  "metadata": {
-    "type": "privacy_graph_metadata",
-    "destination_privacy_domain_trust_criteria": "<pn_trust_criteria_statement>",
-    "more_props_removed_for_clairty": "",
-  },
-  "data": []
 }
 
 //
@@ -65,103 +58,116 @@ A PN Trust Credential is a JWT that that contains the user defined attribute, th
 
 ```
 
-The data owner can associate PN Trust Criteria with data
-- In the data plane using the privacy_pipe_request.destination_privacy_domain_trust_criteria property
-- In the management plane using the PN Data Model.default_destination_privacy_domain_trust_criteria property
+## Associating Trust Criteria with the Data.
+Both PN Trust Criteria and other Trust Criteria can be cryptographically bound to the data within a Privacy Graph. The data owner can associate Trust Criteria with data (1) in the data plane using the privacy_pipe_request see below, and (2) in the management plane using the PN Data Model see below.
+
+The data owner can *associate PN Trust Criteria with the data to control what Privacy Domains the data can be forwarded to* as shown below
 
 ```json
 
-// Pipe request
+//
+// The optional Privacy_Pipe_Request has a destination_privacy_domain_trust_criteria
+// property that can be set to the necessary PN Trust Criteria.
+//
 {
   "id": "<request_id>",
   "type": "privacy_pipe_request",
   "data": [],
   "destination_privacy_domain_trust_criteria": "<pn_data_trust_criteria object",
+  "other_props_removed_for_clarity": "",
 }
 
-// Data model
+// The PN Data model allows a party to define a default so that if none are passed
+// to the privacy pipe this value is used
 {
   "id": "<id>",
   "type": "pn_datamodel",
   "default_destination_privacy_domain_trust_criteria": "<pn_data_trust_criteria>",
+  "other_props_removed_for_clarity": "",
 }
-```
 
-## Data Level
-
-Data Trust Criteria capture the business, compliance and privacy policy semantics that a data owners needs to associate with the data, for example a policy that states that medical record that can be accessed by subject of the record if they have been level-3 authenticated by these trusted services. These are NOT used to determine if data can be forwarded to a Privacy Domain.
-
- also be defined at the data level and cryptographically bound inside the Privacy Graph. These are NOT used to determine if data can be forwarded to a Privacy Domain but capture the business, compliance and privacy policy semantics that a data owners needs to associate with the data. For example medical record that can be accessed by subject of the record if they have been level-3 authenticated by these trusted services. These may be included by reference or by value.
-
-Data Trust Criteria may be of any format and schema, and may be included by reference or value. To be captured inside a Privacy Graph they need in a JSON format or encoded in a format that can be a value in JSON for example a string. Once in this format they can be captured by a PN Data Trust Criteria Object that has the following format, note there is no scope property as it is assumed this is all managed inside the custom trust criteria in the future if needed this can be added so parties can use PN pattern to associate Data Trust Criteria with types and properties.
-
-```json
-// example PN data trust criteria object capturing Data Trust Criteria
-{
-  "id": "globally unique id",
-  "type": ["pn_data_trust_criteria", "custom_type_info"],
-  "trust_criteria": [
-    { "type": "some_custom_type", "prop1": "", "prop2": "", "etc": "etc" },
-    { "type": "some_custom_type", "value": "encoded policies" }
-  ],
-}
-```
-
-The data Trust Criteria are cryptographically bound into a Privacy Graph in the 'data_trust_criteria' property either by value or by reference (id)
-
-```json
-// example Privacy Graph
+//
+// The PN Privacy Graph payload contains the destination_privacy_domain_trust_criteria.
+// Note the PG header and digital signature are removed for clarity.
+//
 {
   "@context": "<pn jsonld context>",
   "id": "<pg id>",
   "type": "privacy_graph",
   "metadata": {
     "type": "privacy_graph_metadata",
-    "data_trust_criteria": {},
-    "destination_privacy_domain_trust_criteria": "<pn_data_trust_criteria>",
-    "more_props_removed_for_clairty": "",
+    "destination_privacy_domain_trust_criteria": "<pn_trust_criteria_statement>",
+    "other_props_removed_for_clairty": "",
   },
   "data": []
 }
+
 ```
-The data owner can associate data Trust Criteria with data at
-- In the data plane using the privacy_pipe_request.data_trust_criteria property
-- In the management plane using the PN Data Model.default_data_trust_criteria property
+
+The data owner can optionally *associate any Trust Criteria with the data and have them bound into the Privacy Graph*. For example a policy that states that data can be accessed by the subject of the record if they have been level-3 authenticated by these trusted services. These are NOT evaluated by privacy pipes but are evaluated and inside Privacy Domains producing the necessary Trust Credentials.
+
+These Trust Criteria may be of any format and schema and may be included by reference or value. To be captured inside a Privacy Graph they need to be in a JSON format or encoded in a format that can be a value in JSON, for example, a string. Once in this format, the data owner can associate these Trust Criteria with the data (1) in the data plane using the privacy_pipe_request see below, and (2) in the management plane using the PN Data Model see below.
 
 ```json
+// The PN Data Trust Criteria object is used to capture the Trust Criteria
+{
+  "id": "globally unique id",
+  "type": ["pn_data_trust_criteria", "custom_type_info"],
+  "scope": "graph",
+  "trust_criteria": [
+    { "type": "some_custom_type", "prop1": "", "prop2": "", "etc": "etc" },
+    { "type": "some_custom_type", "value": "encoded policies" }
+  ],
+}
 
-// Pipe request
+
+//
+// The optional Privacy_Pipe_Request has a trust_criteria property that can be set to
+// necessary trust criteria
+//
 {
   "id": "<request_id>",
   "type": "privacy_pipe_request",
   "data": [],
-  "data_trust_criteria": "<pn_data_trust_criteria>",
+  "trust_criteria": "<pn_data_trust_criteria>",
   "more_props_removed_for_clairty": "",
 }
 
-// Data model
+// The PN Data model allows a party to define a default so that if none are passed
+// to the privacy pipe this value is used
 {
   "id": "<id>",
   "type": "pn_datamodel",
-  "default_data_trust_criteria": "<pn_data_trust_criteria>",
+  "default_trust_criteria": "<pn_data_trust_criteria>",
   "more_props_removed_for_clairty": "",
 }
+
+//
+// A PN Privacy Graph payload containing the trust_criteria.
+// Note the PG header and digital signature are removed for clarity.
+//
+{
+  "@context": "<pn jsonld context>",
+  "id": "<pg id>",
+  "type": "privacy_graph",
+  "metadata": {
+    "type": "privacy_graph_metadata",
+    "trust_criteria": "<pn_data_trust_criteria>",
+    "destination_privacy_domain_trust_criteria": "<pn_trust_criteria_statement>",
+    "other_props_removed_for_clairty": "",
+  },
+  "data": []
+}
+
 ```
 
-# Provenance
+## Associating Trust Credentials with the Data for Provenance
+Both PN Trust Credentials and other Trust Credentials can be cryptographically bound to the data inside a Privacy Graph and used as Provenance by other parties. The data owner can associate PN Trust Criteria with data (1) in the data plane using the privacy_pipe_request see below, and (2) in the management plane using the PN Data Model see below.
 
-In this document Data Provenance is general term that covers the data's Provenance, Lineage and Descriptive information.
-
-Provenance can be defined at the Privacy Domain level (PN Trust Credentials) and at the Data Level (Data Provenance) and are both cryptographically bound into a Privacy Graph.
-
-## Privacy Domain Level
-
-PN Trust Credentials can be used to make provenance claims about Privacy Domains and PN Data Models. A Privacy Agent always cryptographically binds the data source Privacy Domain PN Trust Credentials into the Privacy Graph in the 'source_privacy_domain_trust_credentials' property as non compact JWTs as shown below.
-
-A destination Privacy Domain can control what data flows into it from another Privacy Domains via a reverse proxy Privacy Pipe by defining a set of quality PN Trust Criteria that the source Privacy Domain must have a superset of.
+*The PN automatically associates the data source Privacy Domain's PN Trust Credentials with the data* by cryptographically binding them into the Privacy Graph property 'source_privacy_domain_trust_credentials' as non-compact JWTs as shown below. A destination Privacy Domain can control what data flows into it from another Privacy Domains via a reverse proxy Privacy Pipe by defining a set of quality PN Trust Criteria that the source Privacy Domain must have a superset of.
 
 ```json
-// example Privacy Graph with the source privacy domain PN Trust Credentials
+// example Privacy Graph with the source privacy domain's PN Trust Credentials
 {
   "@context": "<pn jsonld context>",
   "id": "<pg id>",
@@ -178,63 +184,63 @@ A destination Privacy Domain can control what data flows into it from another Pr
         "signature":{},
       }
     ],
-    "data_provenance": "<pn_data_provenance object>",
     "more_props_removed_for_clairty": "",
   },
   "data": []
 }
 ```
 
-## Data Level
+The data owner can optionally *associate any Trust Credentials with the data and have them bound into the Privacy Graph*. These Trust Credentials may be of any format and schema and may be included by reference or value. To be captured inside a Privacy Graph they need to be in a JSON format or encoded in a format that can be a value in JSON, for example, a string. Once in this format, the data owner can associate these Trust Credentials with data (1) in the data plane using the privacy_pipe_request see below, and (2) in the management plane using the PN Data Model see below.
 
-The Data level Provenance may be of any format and schema but to be captured inside a Privacy Graph it needs to be either in JSON or encoded in a format that can be a value in JSON for example a string or other. Once in this format it can be captured by a PN Data Provenance Object that has the following format, note there is no scope property as it is assumed this is all managed inside the Data Trust Criteria in the future if needed this can be added so parties can use PN pattern to provenance with types and properties.
 
 ```json
 {
   "id": "globally unique id",
-  "type": ["pn_data_provenance", "custom_type_info"],
-  "provenance": [
+  "type": ["pn_data_trust_credentials", "custom_type_info"],
+  "trust_credentials": [
     { "type": "some_custom_type", "prop1": "", "prop2": "", "etc": "etc" },
-    { "type": "some_custom_type", "value": "encoded provenance" }
+    { "type": "some_custom_type", "value": "encoded tc" }
   ],
 }
-```
 
-The Data Provenance are cryptographically bound into a Privacy Graph in the 'data_provenance' property either by value or by reference.
 
-```json
-{
-  "id": "<pg id>",
-  "type": "privacy_graph",
-  "metadata": {
-    "type": "privacy_graph_metadata",
-    "data_provenance": "<pn_data_provenance>",
-    "more_props_removed_for_clairty": "",
-  },
-  "data": []
-}
-```
-
-The data owner can associate Data Provenance with data
-- In the data plane using the privacy_pipe_request.data_provenance property
-- In the management plane using the PN Data Model.default_data_provenance property
-
-```json
-
-// Pipe request
+//
+// The optional Privacy_Pipe_Request has a trust_credentials property that can be
+// set to the pn_data_trust_credentials object.
+//
 {
   "id": "<request_id>",
   "type": "privacy_pipe_request",
   "data": [],
-  "data_provenance": "<pn_data_provenance>",
+  "trust_credentials": "<pn_data_trust_credentials>",
   "more_props_removed_for_clairty": "",
 }
 
-// Data model
+// The PN Data model allows a party to define a default so that if none are passed
+// to the privacy pipe this value is used
 {
   "id": "<id>",
   "type": "pn_datamodel",
-  "default_data_provenance": "<pn_data_provenance>",
+  "default_trust_credentials": "<pn_data_trust_credentials>",
   "more_props_removed_for_clairty": "",
 }
+
+//
+// A PN Privacy Graph payload containing the trust_credentials.
+// Note the PG header and digital signature are removed for clarity.
+//
+{
+  "@context": "<pn jsonld context>",
+  "id": "<pg id>",
+  "type": "privacy_graph",
+  "metadata": {
+    "type": "privacy_graph_metadata",
+    "trust_credentials": "<pn_data_trust_credentials>",
+    "source_privacy_domain_trust_credentials":[],
+    "other_props_removed_for_clairty": "",
+  },
+  "data": []
+}
+
+
 ```
